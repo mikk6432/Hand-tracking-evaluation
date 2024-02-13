@@ -4,16 +4,105 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class HelmetMainProcess: ExperimentNetworkClient
+[Serializable]
+public class MessageFromHelmet
 {
-    private int participantId = 1;
-    private bool leftHanded = false;
+    [Serializable]
+    public enum Code
+    {
+        Summary,
+    }
 
+    public MessageFromHelmet()
+    {
+    }
+
+
+    [Serializable]
+    public class Summary : MessageFromHelmet
+    {
+        public int id;
+        public bool left; // whether user is left handed
+
+        public List<float> distances;
+
+        public override string ToString()
+        {
+            return base.ToString() + $", participantId={id}," + (left ? "left" : "right") + $"Handed" + " Distances: [" +  String.Join(", ", distances.ToArray());
+        }
+    }
+}
+
+[Serializable]
+class MessageToHelmet
+{
+    [Serializable]
+    public enum Code
+    {
+        SetParticipantID,
+        SetLeftHanded,
+
+        SetPath,
+
+        Start,
+        Stop
+    }
+
+    public readonly Code code;
+
+    public MessageToHelmet(Code _code)
+    {
+        code = _code;
+    }
+
+    public override string ToString()
+    {
+        return $"ToHelmet: code={Enum.GetName(typeof(Code), code)}";
+    }
+
+    [Serializable]
+    public class SetParticipantID : MessageToHelmet
+    {
+        public readonly int participantID;
+
+        public SetParticipantID(int _participantID) : base(Code.SetParticipantID)
+        {
+            participantID = _participantID;
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + $", participantID={participantID}";
+        }
+    }
+
+    [Serializable]
+    public class SetLeftHanded : MessageToHelmet
+    {
+        public readonly bool leftHanded;
+
+        public SetLeftHanded(bool _leftHanded) : base(Code.SetLeftHanded)
+        {
+            leftHanded = _leftHanded;
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + $", leftHanded={leftHanded}";
+        }
+    }
+}
+
+
+public class HelmetMainProcess : MonoBehaviour
+{
+    private bool leftHanded = false;
+    private int participantId = 0;
     private int currentRunConfigIndex; // for example 4, means that previous 4 runs (0,1,2,3) were fulfilled already
     private RunStage currentRunStage = RunStage.Idle; // is this run already in progress or not
 
     [SerializeField] private ExperimentManager experimentManager;
-    
+
     [Serializable]
     public enum RunStage
     {
@@ -21,24 +110,16 @@ public class HelmetMainProcess: ExperimentNetworkClient
         Running
     }
 
-    private void SendSummary()
-    {
-        var summary = new MessageFromHelmet.Summary();
-
-        summary.id = participantId;
-        summary.left = leftHanded;
-        summary.distances = experimentManager.GetDistances();
-
-        Send(summary);
-    }
-    
-    protected override void Start()
-    {
-        base.Start();
-        experimentManager.measurement.AddListener(SendSummary);
+    private void Send(MessageFromHelmet.Summary summary){
+        // temp mock send method
     }
 
-    protected override void Receive(MessageToHelmet message)
+    protected void Start()
+    {
+        experimentManager.Start();
+    }
+
+    void Receive(MessageToHelmet message)
     {
         Debug.Log(message.ToString());
         switch (message.code)
@@ -58,7 +139,7 @@ public class HelmetMainProcess: ExperimentNetworkClient
             case MessageToHelmet.Code.SetPath:
                 if (currentRunStage == RunStage.Idle)
                 {
-                    experimentManager.OnServerSaidPrepare(_runConfigs[currentRunConfigIndex]);
+                    experimentManager.OnServerSaidStart();
                 }
                 break;
             case MessageToHelmet.Code.Start:
@@ -72,7 +153,7 @@ public class HelmetMainProcess: ExperimentNetworkClient
                 if (currentRunStage == RunStage.Running)
                 {
                     currentRunStage = RunStage.Idle;
-                    experimentManager.OnServerSaidFinishTraining();
+                    experimentManager.OnServerSaidStop();
                 }
                 break;
             default:
