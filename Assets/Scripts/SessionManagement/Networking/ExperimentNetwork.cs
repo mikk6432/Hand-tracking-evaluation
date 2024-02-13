@@ -11,10 +11,7 @@ public class ExperimentNetwork: MonoBehaviour
         [Serializable]
         public enum Code
         {
-            ExperimentSummary,
-            InvalidOperation, // for example, server said to toggle leftHanded, while trial or training was running
-            UnexpectedError, // to be deleted. HelmetProcess can surround dangerous code-blocks with rty catch and sent to server info about error which occured unexpectedly
-            RequestTrialValidation,
+            Summary,
         }
 
         public readonly Code code;
@@ -32,48 +29,16 @@ public class ExperimentNetwork: MonoBehaviour
         [Serializable]
         public class Summary: MessageFromHelmet
         {
-            public int id; // by it we can calc runConfigs sequence either on client or server
-            public bool left; // whether user il left handed
-            public int index; // index of current runConfig. Means that those who have smaller index were fulfilled
-            public int stage; // stage of the current runConfig. If it is preparing, running or idle
+            public int id;
+            public bool left; // whether user is left handed
+
+            public float[] distances;
 
             public Summary(): base(Code.ExperimentSummary) { }
             
             public override string ToString()
             {
-                return base.ToString() + $", participantId={id}," + (left ? "left" : "right") + $"Handed, index={index}, stage={stage}";
-            }
-        }
-        
-        [Serializable]
-        public class InvalidOperation: MessageFromHelmet
-        {
-            public readonly string reason;
-
-            public InvalidOperation(string reason) : base(Code.InvalidOperation)
-            {
-                this.reason = reason;
-            }
-
-            public override string ToString()
-            {
-                return base.ToString() + $", reason: {reason}";
-            }
-        }
-        
-        [Serializable]
-        public class UnexpectedError: MessageFromHelmet
-        {
-            public readonly string errorMessage;
-
-            public UnexpectedError(string errorMessage) : base(Code.UnexpectedError)
-            {
-                this.errorMessage = errorMessage;
-            }
-
-            public override string ToString()
-            {
-                return base.ToString() + $", error: {errorMessage}";
+                return base.ToString() + $", participantId={id}," + (left ? "left" : "right") + $"Handed";
             }
         }
     }
@@ -86,18 +51,11 @@ public class ExperimentNetwork: MonoBehaviour
         {
             SetParticipantID,
             SetLeftHanded,
-            RefreshExperimentSummary,
-            PrepareNextRun,
-            StartNextRun,
-            FinishTraining,
+
+            SetPath,
             
-            // these two are not supposed to happen, only if experiment was interrupted, to continue from where finished
-            SkipNSteps,
-            PlaceTrackAndLight,
-            
-            // walking context trials. User has selected all targets with such size, but was he really walking with metronome?
-            ValidateTrial,
-            InvalidateTrial
+            Start,
+            Stop
         }
 
         public readonly Code code;
@@ -143,17 +101,6 @@ public class ExperimentNetwork: MonoBehaviour
                 return base.ToString() + $", leftHanded={leftHanded}";
             }
         }
-        
-        [Serializable]
-        public class SkipNSteps: MessageToHelmet
-        {
-            public readonly int stepsToSkip;
-
-            public SkipNSteps(int stepsToSkip) : base(Code.SkipNSteps)
-            {
-                this.stepsToSkip = stepsToSkip;
-            }
-        }
     }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -162,7 +109,7 @@ public class ExperimentNetwork: MonoBehaviour
     
     protected int channelID;
     protected int hostID;
-    protected int сonnectionID = INVALID_CONNECTION;
+    protected int connectionID = INVALID_CONNECTION;
 
     protected HostTopology topology;
 
