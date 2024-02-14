@@ -31,7 +31,7 @@ public class HeadsetBehaviour : NetworkBehaviour
     // Here comes the code for the communication between them
 
     [ServerRpc]
-    public void Summary(int personId, bool leftHanded, bool standing, float[] distances)
+    public void SummaryServerRpc(int personId, bool leftHanded, bool standing, float[] distances)
     {
         Debug.Log("Summary received");
         Debug.Log("Person ID: " + personId);
@@ -40,7 +40,7 @@ public class HeadsetBehaviour : NetworkBehaviour
         Debug.Log("Distances: " + distances);
     }
     [ClientRpc]
-    public void StartExperiment(int personId, bool leftHanded, bool standing)
+    public void StartExperimentClientRpc(int personId, bool leftHanded, bool standing)
     {
         Debug.Log("StartExperiment received");
         Debug.Log("Person ID: " + personId);
@@ -48,12 +48,12 @@ public class HeadsetBehaviour : NetworkBehaviour
         Debug.Log("Standing: " + standing);
     }
     [ClientRpc]
-    public void StopExperiment()
+    public void StopExperimentClientRpc()
     {
         Debug.Log("StopExperiment received");
     }
     [ClientRpc]
-    public void RecalculatePath()
+    public void RecalculatePathClientRpc()
     {
         Debug.Log("RecalculatePath received");
     }
