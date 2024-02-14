@@ -30,6 +30,7 @@ Library: /Users/csiztom/projects/Hand-tracking-evaluation/Temp/BurstOutput/tempb
 --assembly-defines=Unity.Mathematics;
 --assembly-defines=Unity.Netcode.Runtime;
 --assembly-defines=Unity.Networking.Transport;
+--assembly-defines=Unity.TextMeshPro;
 --assembly-defines=Unity.XR.Management;
 --assembly-defines=Unity.XR.Oculus;
 --assembly-defines=UnityEngine;
