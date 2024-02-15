@@ -72,6 +72,7 @@ public class HeadsetBehaviour : NetworkBehaviour
     public void StopExperimentClientRpc()
     {
         experimentManager.OnServerSaidStop();
+        CancelInvoke("GetSummary");
         Debug.Log("StopExperiment received");
     }
     [ClientRpc]
