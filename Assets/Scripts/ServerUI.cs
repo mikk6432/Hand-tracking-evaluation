@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
@@ -51,7 +49,7 @@ public class ServerUI : MonoBehaviour
         }
         else
         {
-            connectionStatusText.text = "Connecting...";
+            connectionStatusText.text = "Connecting";
             connectionStatusText.color = Color.yellow;
         }
     }
