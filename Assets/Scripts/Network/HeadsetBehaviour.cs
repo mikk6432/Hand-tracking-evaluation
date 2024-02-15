@@ -2,9 +2,14 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class HeadsetBehaviour : NetworkBehaviour
 {
+    void Start()
+    {
+        experimentManager = FindAnyObjectByType<ExperimentManager>();
+    }
     // Here comes the code for distinguishing between the server and the client
     // and loading the scene on the client
 #if UNITY_EDITOR
@@ -19,7 +24,6 @@ public class HeadsetBehaviour : NetworkBehaviour
 #endif
     [SerializeField]
     private string m_SceneName;
-    [SerializeField]
     private ExperimentManager experimentManager;
     public override void OnNetworkSpawn()
     {
@@ -27,7 +31,7 @@ public class HeadsetBehaviour : NetworkBehaviour
         if (!IsServer && !string.IsNullOrEmpty(m_SceneName) && IsOwner)
         {
             SceneManager.LoadScene(m_SceneName, LoadSceneMode.Additive);
-            experimentManager.Start();
+            experimentManager?.Start();
         }
     }
 
@@ -35,10 +39,10 @@ public class HeadsetBehaviour : NetworkBehaviour
     // Update is called once per frame
     private void LateUpdate()
     {
-        experimentManager.UpdateSphere();
+        experimentManager?.UpdateSphere();
 
-        if (experimentManager.GetIdle()) return;
-        experimentManager.Log();
+        if (experimentManager?.GetIdle() ?? true) return;
+        experimentManager?.Log();
     }
 
     // Here comes the code for the communication between them
@@ -57,7 +61,7 @@ public class HeadsetBehaviour : NetworkBehaviour
     private bool standing = true;
     private void GetSummary()
     {
-        SummaryServerRpc(id, left, standing, experimentManager.GetDistances().ToArray());
+        SummaryServerRpc(id, left, standing, experimentManager?.GetDistances().ToArray());
     }
     [ClientRpc]
     public void StartExperimentClientRpc(int personId, bool leftHanded, bool standing)
@@ -65,20 +69,20 @@ public class HeadsetBehaviour : NetworkBehaviour
         id = personId;
         left = leftHanded;
         this.standing = standing;
-        experimentManager.OnServerSaidStart();
+        experimentManager?.OnServerSaidStart();
         InvokeRepeating("GetSummary", 0f, 1.0f);
     }
     [ClientRpc]
     public void StopExperimentClientRpc()
     {
-        experimentManager.OnServerSaidStop();
+        experimentManager?.OnServerSaidStop();
         CancelInvoke("GetSummary");
         Debug.Log("StopExperiment received");
     }
     [ClientRpc]
     public void RecalculatePathClientRpc()
     {
-        experimentManager.OnServerSetPath();
+        experimentManager?.OnServerSetPath();
         Debug.Log("RecalculatePath received");
     }
 }
