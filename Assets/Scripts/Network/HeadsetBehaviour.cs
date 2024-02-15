@@ -32,9 +32,6 @@ public class HeadsetBehaviour : NetworkBehaviour
     }
 
 
-    private int limit = 100; // Get summary every limit measurements
-    private int counter = 0;
-
     // Update is called once per frame
     private void LateUpdate()
     {
@@ -42,15 +39,6 @@ public class HeadsetBehaviour : NetworkBehaviour
 
         if (experimentManager.GetIdle()) return;
         experimentManager.Log();
-        counter++;
-        if (counter > limit)
-        {
-            const int id = 0;
-            const bool left = true;
-            const bool standing = true;
-            SummaryServerRpc(id, left, standing, experimentManager.GetDistances().ToArray());
-            counter = 0;
-        }
     }
 
     // Here comes the code for the communication between them
@@ -64,14 +52,21 @@ public class HeadsetBehaviour : NetworkBehaviour
         Debug.Log("Standing: " + standing);
         Debug.Log("Distances: " + distances);
     }
+    private int id = 0;
+    private bool left = true;
+    private bool standing = true;
+    private void GetSummary()
+    {
+        SummaryServerRpc(id, left, standing, experimentManager.GetDistances().ToArray());
+    }
     [ClientRpc]
     public void StartExperimentClientRpc(int personId, bool leftHanded, bool standing)
     {
+        id = personId;
+        left = leftHanded;
+        this.standing = standing;
         experimentManager.OnServerSaidStart();
-        Debug.Log("StartExperiment received");
-        Debug.Log("Person ID: " + personId);
-        Debug.Log("Left handed: " + leftHanded);
-        Debug.Log("Standing: " + standing);
+        InvokeRepeating("GetSummary", 0f, 1.0f);
     }
     [ClientRpc]
     public void StopExperimentClientRpc()
