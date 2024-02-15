@@ -40,7 +40,7 @@ public class HeadsetBehaviour : NetworkBehaviour
     {
         experimentManager.UpdateSphere();
 
-        // if (_state != State.Running) return;
+        if (experimentManager.GetIdle()) return;
         experimentManager.Log();
         counter++;
         if (counter > limit)
@@ -49,7 +49,6 @@ public class HeadsetBehaviour : NetworkBehaviour
             const bool left = true;
             const bool standing = true;
             SummaryServerRpc(id, left, standing, experimentManager.GetDistances().ToArray());
-            Debug.Log(experimentManager.GetSummary().ToString());
             counter = 0;
         }
     }

@@ -12,14 +12,16 @@ public partial class ExperimentManager : MonoBehaviour
     public readonly UnityEvent trialsFinished = new();
     public readonly UnityEvent requestTrialValidation = new();
     public readonly UnityEvent<string> unexpectedErrorOccured = new();
+    public int participantID;
+    public bool leftHanded; // indicates, that dominant hand is left
+    public bool standing; // indicates that the participant is stationary
 
     private GameObject sphere;
     private GameObject fingerTipMock;
     public float speed = 5f;
     private float originalX;
 
-    private State _state = State.Running;
-    private RunConfig _runConfig;
+    private bool idle = false;
 
     #region MonoBehaviour methods
 
@@ -117,8 +119,8 @@ public partial class ExperimentManager : MonoBehaviour
 
     private void ActualizeHands()
     {
-        leftIndexTip.SetActive(_runConfig.leftHanded);
-        rightIndexTip.SetActive(!_runConfig.leftHanded);
+        leftIndexTip.SetActive(leftHanded);
+        rightIndexTip.SetActive(!leftHanded);
     }
     #endregion
 
@@ -134,31 +136,24 @@ public partial class ExperimentManager : MonoBehaviour
         _measurementId++;
     }
 
-    public List<float> GetDistances(){
+    public List<float> GetDistances()
+    {
         return distances;
     }
-    
-    public bool GetLeftHanded(){
-        return _runConfig.leftHanded;
-    }
 
-    public bool GetStanding(){
-        return _runConfig.standing;
-    }
-
-    // Currently just used for debugging
-    public MessageFromHelmet.Summary GetSummary()
+    public bool GetIdle()
     {
-        var summary = new MessageFromHelmet.Summary();
-        summary.id = _measurementId;
-        summary.left = _runConfig.leftHanded;
-        summary.distances = distances;
+        return idle;
+    }
 
-        // reset measurements
-        _measurementId = 0;
-        distances = new List<float>();
+    public bool GetLeftHanded()
+    {
+        return leftHanded;
+    }
 
-        return summary;
+    public bool GetStanding()
+    {
+        return standing;
     }
 
     public float GetDistance(GameObject obj1, GameObject obj2)
@@ -170,11 +165,11 @@ public partial class ExperimentManager : MonoBehaviour
     #region Event Redirecting Methods
     public void OnServerSaidStart()
     {
-        _state = State.Running;
+        idle = false;
     }
     public void OnServerSaidStop()
     {
-        _state = State.Idle;
+        idle = true;
     }
     public void OnServerSetPath()
     {
@@ -184,67 +179,8 @@ public partial class ExperimentManager : MonoBehaviour
     }
     public void OnServerSetLeft()
     {
-        _runConfig.leftHanded = true;
+        leftHanded = true;
     }
 
     #endregion
-}
-
-partial class ExperimentManager
-{
-    public enum ReferenceFrame
-    {
-        PathReferenced, // head
-        PathReferencedNeck // neck
-    }
-
-    public struct RunConfig
-    {
-        public int participantID;
-        public bool leftHanded; // indicates, that dominant hand is left
-        public bool standing; // indicates that the participant is stationary
-
-        public RunConfig(int participantID, bool leftHanded, bool standing)
-        {
-            this.participantID = participantID;
-            this.leftHanded = leftHanded;
-            this.standing = standing;
-        }
-    }
-
-    private enum State
-    {
-        Idle, // preparing (update track, light ans so on)
-        Running
-    }
-}
-
-
-[Serializable]
-public class MessageFromHelmet
-{
-    [Serializable]
-    public enum Code
-    {
-        Summary,
-    }
-
-    public MessageFromHelmet()
-    {
-    }
-
-
-    [Serializable]
-    public class Summary : MessageFromHelmet
-    {
-        public int id;
-        public bool left; // whether user is left handed
-
-        public List<float> distances;
-
-        public override string ToString()
-        {
-            return base.ToString() + $", participantId={id}," + (left ? "left" : "right") + $"Handed" + " Distances: [" + String.Join(", ", distances.ToArray());
-        }
-    }
 }
